@@ -33,94 +33,35 @@ buffer_mix_db.commit()
 #mycursor.execute("DROP TABLE buffer_chemicals")
 
 
-#
-# # Populate the buffer_chemicals table
-# mycursor.execute("SELECT buffer_id, chemical_1, chemical_2, chemical_3, chemical_4, chemical_5, chemical_6, chemical_7, chemical_8, chemical_9, chemical_10, chemical_11, chemical_12 FROM buffers")
-# buffers = mycursor.fetchall()
-#
-# for buffer in buffers:
-#     buffer_id = buffer[0]
-#     for i in range(1, 13):
-#         chem_name = buffer[i]
-#         if chem_name:
-#             mycursor.execute("SELECT chemID FROM chemicals WHERE chemName = %s", (chem_name,))
-#             chem_id = mycursor.fetchone()[0]
-#             mycursor.execute("INSERT INTO buffer_chemicals (buffer_id, chem_id) VALUES (%s, %s)", (buffer_id, chem_id))
-#
-# # Commit the changes to the database
-# buffer_mix_db.commit()
-#
-# # Close the cursor and database connections
-# mycursor.close()
-# buffer_mix_db.close()
-
-
-
-
 # Prompt user to select a buffer
-buffer_name = input("Enter the name of the buffer you want to make: ")
+#buffer_name = input("Enter the name of the buffer you want to make: ")
+
+#Prompt the user to select a buffer
+print("Select a buffer from the following list:")
+mycursor.execute("SELECT buffer_name FROM buffers")
+buffers = mycursor.fetchall()
+for i, buffer in enumerate(buffers):
+    print("{} - {}".format(i+1, buffer[0]))
+
+buffer_choice = int(input("Enter the number of the buffer you want to use: "))
+selected_buffer_name = buffers[buffer_choice - 1][0]
 
 # Get the chemicals and their respective pump numbers for the selected buffer
-mycursor.execute("SELECT b.buffer_name, c.chemName, c.pumpNo FROM buffer_chemicals bc "
+mycursor.execute("SELECT b.buffer_name, c.chemName, c.pumpNo FROM solventmix bc "
                  "JOIN buffers b ON bc.buffer_id = b.buffer_id "
                  "JOIN chemicals c ON bc.chem_id = c.chemID "
-                 "WHERE b.buffer_name = %s", (buffer_name,))
-results = mycursor.fetchall()
+                 "WHERE b.buffer_name = %s", (selected_buffer_name,))
+chemBuff_results = mycursor.fetchall()
 
 # Print the results
-if results:
-    print(f"Chemicals and their respective pump numbers for buffer '{buffer_name}':")
-    for result in results:
-        print(f"{result[1]} - Pump {result[2]}")
+if chemBuff_results:
+    print("Below are the chemicals and pumps for Buffer:{}".format(selected_buffer_name))
+    for result in chemBuff_results:
+        print(f"{result[1]} connected to - Pump {result[2]}")
 else:
-    print(f"No chemicals found for buffer '{buffer_name}'.")
+    print("No chemicals found for buffer {}".format(selected_buffer_name))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Prompt the user to select a buffer
-# print("Select a buffer from the following list:")
-# mycursor.execute("SELECT buffer_name FROM buffers")
-# buffers = mycursor.fetchall()
-# for i, buffer in enumerate(buffers):
-#     print("{} - {}".format(i+1, buffer[0]))
-#
-# buffer_choice = int(input("Enter the number of the buffer you want to use: "))
-# selected_buffer_name = buffers[buffer_choice - 1][0]
-#
-# # Retrieve the list of chemicals and their pump numbers
-# mycursor.execute("SELECT * FROM buffers WHERE buffer_name = %s", (selected_buffer_name,))
-# selected_buffer = mycursor.fetchone()
-#
-# #print(selected_buffer[i * 1])
-#
-# chemical_pumps = {}
-# for i in range(1, 13):
-#     chemical_name = selected_buffer[i * 1]
-#     if chemical_name is None:
-#         break
-#     mycursor.execute("SELECT pumpNo FROM chemicals WHERE chemName = %s", (chemical_name,))
-#     pump_number = mycursor.fetchone()[1]
-#     chemical_pumps[chemical_name] = pump_number
-#
-# print("The following chemicals are in the {} buffer:".format(selected_buffer_name))
-# for chemical_name, pump_number in chemical_pumps.items():
-#     print("- {} (pump {})".format(chemical_name, pump_number))
-#
-#
 # """
 # # Prompt the user to adjust the individual chemical weights
 # chemical_weights = {}
