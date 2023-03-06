@@ -16,7 +16,7 @@ except mysql.connector.Error as error:
 mycursor = buffer_mix_db.cursor()
 
 
-#mycursor.execute("CREATE DATABASE BufferStationDB")
+#mycursor.execute("CREATE DATABASE IF NOT EXISTS BufferStationDB")
 
 # Creating a table to store chemical details if it doesn't exist
 mycursor.execute("CREATE TABLE IF NOT EXISTS chemicals ("
@@ -43,7 +43,7 @@ buffer_mix_db.commit()
 #     choice = input("Do you want to delete another table? (YES/NO)").lower()
 #     if choice != "yes":
 #         break
-##End table deletion
+# #End table deletion
 
 
 #Create a buffer table. Each buffer can have different number of chemicals
@@ -82,10 +82,11 @@ buffer_mix_db.commit()
 
 #Create an intermediate  aka joining table to handle many to many relationsip connecting chemiacals and buffer tables
 mycursor.execute("CREATE TABLE IF NOT EXISTS solventmix ("
-                 "solvent_id INT PRIMARY KEY AUTO_INCREMENT,"
+                 "solvent_id INT,"
                  "buffer_id INT NOT NULL,"
-                 "chem_id INT NOT NULL,"
+                 "chem_id INT NOT NULL,"                 
                  "buffer_maker VARCHAR(255),"
+                 "PRIMARY KEY (buffer_id, chem_id),"
                  "FOREIGN KEY (buffer_id) REFERENCES buffers(buffer_id),"
                  "FOREIGN KEY (chem_id) REFERENCES chemicals(chemID)"
                  ")")
