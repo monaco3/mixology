@@ -1,3 +1,11 @@
+"""
+Here we will control the motors/pumps
+Each pump/motor will be assigned to a specific chemical, done during station preparation.( see station_preparation.py)
+
+Run each motor/pump one by one till the required chemical weight target is reached
+
+"""
+
 import time
 from labjack import ljm
 #---------------- PHASE 00 -MAKE SURE THERE IS CONNECTION to the Labjack  ------------------------------#

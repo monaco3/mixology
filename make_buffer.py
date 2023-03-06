@@ -1,16 +1,9 @@
 """
-Here we will control the motors/pumps
-Each pump/motor will be assigned to a specific chemical, done during station preparation.( see station_preparation.py)
-
 1. Pick a buffer to be made. ( The buffer will have a list of chemicals to be made)
-2. Prompt the user to adjustment the individual chemical weight.
+2. Prompt the user to adjust the individual chemical weight.
 if the choice is yes then add the additional weight to the chemicals total weight
 if the users choice is no, then the target weight remains to be the solvent target weight = buffer weight
-
-Run each motor/pump one by one till the required target is reached
-
 """
-
 
 import time
 import mysql.connector
