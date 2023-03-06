@@ -43,11 +43,11 @@ buffers = mycursor.fetchall()
 for i, buffer in enumerate(buffers):
     print("{} - {}".format(i+1, buffer[0]))
 
-buffer_choice = int(input("Enter the number of the buffer you want to use: "))
+buffer_choice = int(input("Enter the buffer number you want to use: "))
 selected_buffer_name = buffers[buffer_choice - 1][0]
 
 # Get the chemicals and their respective pump numbers for the selected buffer
-mycursor.execute("SELECT b.buffer_name, c.chemName, c.pumpNo FROM solventmix bc "
+mycursor.execute("SELECT b.buffer_name, c.chemName,c.pumpNo, c.molarWeight FROM solventmix bc "
                  "JOIN buffers b ON bc.buffer_id = b.buffer_id "
                  "JOIN chemicals c ON bc.chem_id = c.chemID "
                  "WHERE b.buffer_name = %s", (selected_buffer_name,))
@@ -61,37 +61,56 @@ if chemBuff_results:
 else:
     print("No chemicals found for buffer {}".format(selected_buffer_name))
 
+###----ADJUSTING THE CHEMICAL VALUES FOR THE SELECTED BUFFER--------------
 
-# """
-# # Prompt the user to adjust the individual chemical weights
-# chemical_weights = {}
-# for i in range(1, 13):
-#     chemical_name = selected_buffer[i * 2]
-#     chemical_weight = selected_buffer[(i * 2) + 1]
-#     adjust_weight = input("Adjust weight for {}: {} g (y/n)? ".format(chemical_name, chemical_weight))
-#     if adjust_weight.lower() == "y":
-#         additional_weight = float(input("Enter additional weight (in g): "))
-#         chemical_weight += additional_weight
-#     chemical_weights[chemical_name] = chemical_weight
-#
-# # Calculate the total weight of the buffer
-# total_weight = sum(chemical_weights.values())
-#
-# # Prompt the user to confirm the buffer details
-# print("Buffer: {}".format(selected_buffer[0]))
-# print("Total weight: {} g".format(total_weight))
-# for chemical, weight in chemical_weights.items():
-#     print("{}: {} g".format(chemical, weight))
-# confirm = input("Confirm buffer details (y/n)? ")
-# if confirm.lower() != "y":
-#     print("Buffer creation cancelled.")
-#     exit()
-#
-#
-# # Update the actual weight in the solventmixer table
-# mycursor.execute("UPDATE solventmixer SET actual_weight = %s WHERE solvent_name = %s",
-#                  (total_weight, selected_buffer[0]))
-# buffer_mix_db.commit()
-# print("Solvent mixer updated with actual weight.")
-#
-# """
+# Prompt the user to adjust the individual chemical weights
+chemical_weights = {}
+for result in chemBuff_results:
+    chemical_name = result[1]
+    chemical_weight = result[3]
+    adjust_weight = input("Adjust weight for {}: {} g (YES/NO)? ".format(chemical_name, chemical_weight))
+    if adjust_weight.lower() == "yes":
+        additional_weight = float(input("Enter the weight you want to add (in g): "))
+        chemical_weight += additional_weight
+    chemical_weights[chemical_name] = chemical_weight
+
+# Calculate the total weight of the buffer
+new_chemical_weight = sum(chemical_weights.values())
+
+# Prompt the user to confirm the buffer details
+print("Buffer: {}".format(selected_buffer_name))
+print("Total weight for {} is : {} g".format(selected_buffer_name, new_chemical_weight))
+for chemical, weight in chemical_weights.items():
+    print("{}: {} g".format(chemical, weight))
+confirm = input("Confirm buffer details (YES/NO)? ")
+if confirm.lower() != "yes":
+    print("Buffer creation cancelled.")
+    exit()
+
+# Prompt the user to enter the buffer_processor_name and batch_number
+nameofbuffer_processor = input("Enter your initials or name: ")
+batch_number = input("Enter the batch_number: ")
+
+# Get the buffer_id for the selected buffer name
+mycursor.execute("SELECT buffer_id FROM buffers WHERE buffer_name = %s", (selected_buffer_name,))
+buffer_id = mycursor.fetchone()[0]
+
+# Prepare the SQL statement to insert the processed buffer data
+processedBuffer_sql = "INSERT INTO processedBuffer (nameofbuffer_processor, batch_number, buffer_id, chem_id, original_weight, adjusted_weight) VALUES (%s, %s, %s, %s, %s, %s)"
+
+# Loop through each chemical used in the buffer and insert its data into the processedBuffer table
+for result in chemBuff_results:
+    chemical_name = result[1]
+    original_weight = result[3]
+    adjusted_weight = chemical_weights[chemical_name]
+    mycursor.execute("SELECT chemID FROM chemicals WHERE chemName = %s", (chemical_name,))
+    chem_id = mycursor.fetchone()[0]
+    data = (nameofbuffer_processor, batch_number, buffer_id, chem_id, original_weight, adjusted_weight)
+    mycursor.execute(processedBuffer_sql, data)
+
+# Commit the changes to the database
+buffer_mix_db.commit()
+
+# Print a success message
+print("Buffer creation successful. Data saved to processedBuffer table.")
+

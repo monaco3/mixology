@@ -91,3 +91,20 @@ mycursor.execute("CREATE TABLE IF NOT EXISTS solventmix ("
                  "FOREIGN KEY (chem_id) REFERENCES chemicals(chemID)"
                  ")")
 buffer_mix_db.commit()
+
+
+
+#Create a table to store all the information of the final buffer making or solvent mixing.
+#Here we add the batch_number, chamicals used, buffer_used, Target_chemical_weight, adjusted_chemical_weight, buffer_processor,
+mycursor.execute("CREATE TABLE IF NOT EXISTS processedBuffer ("
+                 "processedBuffer_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,"
+                 "nameofbuffer_processor VARCHAR(255),"
+                 "batch_number VARCHAR(255),"
+                 "chem_id INT NOT NULL,"
+                 "buffer_id INT NOT NULL,"
+                 "original_weight FLOAT,"
+                 "adjusted_weight FLOAT,"                                                             
+                 "FOREIGN KEY (buffer_id) REFERENCES buffers(buffer_id),"
+                 "FOREIGN KEY (chem_id) REFERENCES chemicals(chemID)"
+                 ")")
+buffer_mix_db.commit()
