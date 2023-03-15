@@ -18,6 +18,17 @@ buffer_mix_db = mysql.connector.connect(
   database="BufferStationDB", #"yourdatabase"
 )
 
+# import time
+# from labjack import ljm
+# #---------------- PHASE 00 -MAKE SURE THERE IS CONNECTION to the Labjack  ------------------------------#
+#
+# mylabjack = ljm.openS("ANY", "ANY","ANY") #Connect to any labkjack connected to the host computer or network
+# info = ljm.getHandleInfo(mylabjack)
+# print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
+#       "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
+#       (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
+# ################ End of the connected Labjack info ####################
+
 #Creating a cursor object using the cursor() method
 mycursor = buffer_mix_db.cursor()
 
@@ -46,13 +57,62 @@ mycursor.execute("SELECT b.buffer_name, c.chemName,c.pumpNo, c.molarWeight FROM 
                  "WHERE b.buffer_name = %s", (selected_buffer_name,))
 chemBuff_results = mycursor.fetchall()
 
+
+class UsedPumps:
+    def __init__(self):
+        self.pumps = set()
+
+    def add_pump(self, pump_number):
+        self.pumps.add(pump_number)
+
+    def remove_pump(self, pump_number):
+        self.pumps.remove(pump_number)
+
+    def get_pumps(self):
+        return sorted(self.pumps)
+
+
+# Create an instance of the UsedPumps class
+used_pumps = UsedPumps()
+
 # Print the results
 if chemBuff_results:
     print("Below are the chemicals and pumps for Buffer:{}".format(selected_buffer_name))
     for result in chemBuff_results:
         print(f"{result[1]} connected to - Pump {result[2]}")
+        used_pumps.add_pump(result[2])
+    print("Pumps used: {}".format(used_pumps.get_pumps()))
 else:
     print("No chemicals found for buffer {}".format(selected_buffer_name))
+
+
+#Connect the pumps to corresponding labjack pins
+
+# Specify the pins for each pump
+pump_pins = {
+    1: "EIO0", #S0 	EIO0
+    2: "EIO1", #S1 	EIO1
+    3: "EIO4", #S2 	EIO2
+    4: "EIO3", #S3 	EIO3
+    5: "EIO4", #S4 	EIO4
+    6: "CIO3", #S5 	EIO5
+    7: "EIO6", #S6 	EIO6
+    8: "EIO7", #S7 	EIO7
+    9: "CIO0", #S8 	CIO0
+    10: "CIO1",#S9 	CIO1
+    11: "CIO2",#S10 CIO2
+    12: "EIO5" #S11 CIO3
+}
+
+# Link the used pumps to the motor pins
+#pumps_used = used_pumps.get_pumps()
+motor_pins = []
+for pump in used_pumps.get_pumps():
+    if pump in pump_pins:
+        motor_pins.append(pump_pins[pump])
+
+# Print the motor pins used
+print("Motor pins used: {}".format(", ".join(motor_pins)))
 
 ###----ADJUSTING THE CHEMICAL VALUES FOR THE SELECTED BUFFER--------------
 
@@ -91,6 +151,7 @@ buffer_id = mycursor.fetchone()[0]
 # Prepare the SQL statement to insert the processed buffer data
 processedBuffer_sql = "INSERT INTO processedBuffer (nameofbuffer_processor, batch_number, buffer_id, chem_id, original_weight, adjusted_weight) VALUES (%s, %s, %s, %s, %s, %s)"
 
+
 # Loop through each chemical used in the buffer and insert its data into the processedBuffer table
 for result in chemBuff_results:
     chemical_name = result[1]
@@ -101,8 +162,26 @@ for result in chemBuff_results:
     data = (nameofbuffer_processor, batch_number, buffer_id, chem_id, original_weight, adjusted_weight)
     mycursor.execute(processedBuffer_sql, data)
 
+#     # Control the LabJack to dispense the chemical
+#     duration = int(adjusted_weight * 1)  # Convert weight to milliseconds
+#     ljm.eWriteName(mylabjack, pin_number, 1)  # Set the pin high
+#     print(f"Set pin {pin_number} high")
+#     time.sleep( duration )  # Wait for the duration of the dispense
+#
+#     # Set the pump pin low
+#     ljm.eWriteName(mylabjack, pin_number, 0)  # Set the pin low
+#     print(f"Set pin {pin_number} low")
+#
+# # Close the Labjack connection
+# ljm.close(mylabjack)
+
 # Commit the changes to the database
 buffer_mix_db.commit()
 
 # Print a success message
 print("Buffer creation successful. Data saved to processedBuffer table.")
+
+
+
+
+

@@ -82,11 +82,12 @@ buffer_mix_db.commit()
 
 #Create an intermediate  aka joining table to handle many to many relationsip connecting chemiacals and buffer tables
 mycursor.execute("CREATE TABLE IF NOT EXISTS solventmix ("
-                 "solvent_id INT,"
+                 "solvent_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,"
                  "buffer_id INT NOT NULL,"
                  "chem_id INT NOT NULL,"                 
                  "buffer_maker VARCHAR(255),"
-                 "PRIMARY KEY (buffer_id, chem_id),"
+                 "solvent_created timestamp default now(), "
+                 #"PRIMARY KEY (buffer_id, chem_id),"
                  "FOREIGN KEY (buffer_id) REFERENCES buffers(buffer_id),"
                  "FOREIGN KEY (chem_id) REFERENCES chemicals(chemID)"
                  ")")
