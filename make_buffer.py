@@ -151,6 +151,18 @@ buffer_id = mycursor.fetchone()[0]
 # Prepare the SQL statement to insert the processed buffer data
 processedBuffer_sql = "INSERT INTO processedBuffer (nameofbuffer_processor, batch_number, buffer_id, chem_id, original_weight, adjusted_weight) VALUES (%s, %s, %s, %s, %s, %s)"
 
+#
+# # Loop through each chemical used in the buffer and insert its data into the processedBuffer table
+# for result in chemBuff_results:
+#     chemical_name = result[1]
+#     original_weight = result[3]
+#     adjusted_weight = chemical_weights[chemical_name]
+#     mycursor.execute("SELECT chemID FROM chemicals WHERE chemName = %s", (chemical_name,))
+#     chem_id = mycursor.fetchone()[0]
+#     data = (nameofbuffer_processor, batch_number, buffer_id, chem_id, original_weight, adjusted_weight)
+#     mycursor.execute(processedBuffer_sql, data)
+
+
 
 # Loop through each chemical used in the buffer and insert its data into the processedBuffer table
 for result in chemBuff_results:
@@ -161,6 +173,31 @@ for result in chemBuff_results:
     chem_id = mycursor.fetchone()[0]
     data = (nameofbuffer_processor, batch_number, buffer_id, chem_id, original_weight, adjusted_weight)
     mycursor.execute(processedBuffer_sql, data)
+
+    # Calculate the duration for how long the motor pin should be turned high based on the adjusted weight
+    duration = int(round(adjusted_weight * 1000))
+
+    # Print the adjusted weight and the duration
+    print(f"{chemical_name}: adjusted weight = {adjusted_weight}, duration = {duration}ms")
+
+    # Turn the motor pin high for the specified duration
+    pump_number = result[2]
+    pin = pump_pins[pump_number]
+    #daq.setDigitalPin(pin, 1)
+    print(f"Set pin {pin} high")
+    time.sleep(duration/1000)
+    #time.sleep(2)
+    #daq.setDigitalPin(pin, 0)
+    print(f"Set pin {pin} low")
+
+    # Add the pump to the set of used pumps
+    used_pumps.add_pump(pump_number)
+
+# Print the list of used pumps
+print("Pumps used: {}".format(used_pumps.get_pumps()))
+
+
+
 
 #     # Control the LabJack to dispense the chemical
 #     duration = int(adjusted_weight * 1)  # Convert weight to milliseconds
