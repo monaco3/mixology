@@ -13,7 +13,7 @@ import mysql.connector
 # try:
 #     buffer_mix_db = mysql.connector.connect(
 #         host="localhost",
-#         user="phdd",
+#         user="root",
 #         password="root",
 #         database="BufferStationDB",
 #     )

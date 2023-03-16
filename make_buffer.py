@@ -84,18 +84,32 @@ else:
 
 # Specify the pins for each pump
 pump_pins = {
-    1: "EIO6", #S0 	EIO0
-    2: "EIO7", #S1 	EIO1
-    3: "EIO4", #S2 	EIO2
+    #P1 - DB15 connector
+    1: "EIO0", #S0 	EIO0  
+    2: "EIO1", #S1 	EIO1
+    3: "EIO2", #S2 	EIO2
     4: "EIO3", #S3 	EIO3
     5: "EIO4", #S4 	EIO4
-    6: "CIO3", #S5 	EIO5
+    6: "EIO5", #S5 	EIO5
     7: "EIO6", #S6 	EIO6
     8: "EIO7", #S7 	EIO7
     9: "CIO0", #S8 	CIO0
     10: "CIO1",#S9 	CIO1
     11: "CIO2",#S10 CIO2
-    12: "EIO5" #S11 CIO3
+    12: "CIO3", #S11 CIO3
+#P2 - DB37 connector
+    13: "FIO0", #S0 FIO0  
+    14: "FIO1", #S1 FIO1
+    15: "FIO2", #S2 FIO2
+    16: "FIO3", #S3 FIO3
+    17: "FIO4", #S4 FIO4
+    18: "FIO5", #S5 FIO5
+    19: "FIO6", #S6 FIO6
+    20: "FIO7", #S7 FIO7
+    21: "DAC0", #S8 DAC0
+    22: "DAC1", #S9 DAC1
+    23: "MIO0", #S10 MIO0
+    24: "MIO1"  #S11 MIO1
 }
 
 # Link the used pumps to the motor pins
