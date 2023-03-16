@@ -11,14 +11,7 @@ import mysql.connector
 #from station_preparation import *
 
 # Connect to the database
-buffer_mix_db = mysql.connector.connect(
-  host="sql7.freesqldatabase.com", #"localhost",
-  user="sql7606170",  #"yourusername",
-  password="X74Xryppcr",  # "yourpassword",
-  database="sql7606170", #"yourdatabase"
-  port="3306",
-)
-
+from private import *
 import time
 from labjack import ljm
 #---------------- PHASE 00 -MAKE SURE THERE IS CONNECTION to the Labjack  ------------------------------#

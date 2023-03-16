@@ -1,18 +1,4 @@
-import mysql.connector
-
-# Establishing a connection to the database
-try:
-    buffer_mix_db = mysql.connector.connect(
-        host="sql7.freesqldatabase.com",   #localhost
-        user="sql7606170",
-        password="X74Xryppcr",
-        database="sql7606170",
-        port="3306",
-    )
-    print("Connection established successfully!")
-except mysql.connector.Error as error:
-    print(f"Error connecting to MySQL: {error}")
-
+from private import *
 # Creating a cursor object using the cursor() method
 mycursor = buffer_mix_db.cursor()
 
