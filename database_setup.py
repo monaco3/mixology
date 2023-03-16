@@ -3,10 +3,11 @@ import mysql.connector
 # Establishing a connection to the database
 try:
     buffer_mix_db = mysql.connector.connect(
-        host="localhost",
-        user="phdd",
-        password="root",
-        database="BufferStationDB",
+        host="sql7.freesqldatabase.com",   #localhost
+        user="sql7606170",
+        password="X74Xryppcr",
+        database="sql7606170",
+        port="3306",
     )
     print("Connection established successfully!")
 except mysql.connector.Error as error:
@@ -14,7 +15,6 @@ except mysql.connector.Error as error:
 
 # Creating a cursor object using the cursor() method
 mycursor = buffer_mix_db.cursor()
-
 
 #mycursor.execute("CREATE DATABASE IF NOT EXISTS BufferStationDB")
 
@@ -24,7 +24,7 @@ mycursor.execute("CREATE TABLE IF NOT EXISTS chemicals ("
                  "chemName VARCHAR(255) NOT NULL, "
                  "availAmount float UNSIGNED, "
                  "stamp_created timestamp default now(), "
-                 "stamp_updated timestamp default now() on update now(), "
+                 #"stamp_updated timestamp default now() on update now(), "
                  "addedAmount float UNSIGNED, "
                  "molarWeight float UNSIGNED, "
                  "pumpNo int UNSIGNED)")
@@ -52,7 +52,7 @@ mycursor.execute("CREATE TABLE IF NOT EXISTS buffers(buffer_id  int PRIMARY KEY 
                  "buffer_weight FLOAT NOT NULL,"
                  "buffer_maker VARCHAR(255),"
                  "buffer_created timestamp default now(),"
-                 "buffer_updated timestamp default now() on update now(),"
+                 #"buffer_updated timestamp default now() on update now(),"
                  "chemical_1 VARCHAR(255) NOT NULL,"
                  "chemical_1_weight FLOAT NOT NULL,"
                  "chemical_2 VARCHAR(255),"
@@ -104,7 +104,8 @@ mycursor.execute("CREATE TABLE IF NOT EXISTS processedBuffer ("
                  "chem_id INT NOT NULL,"
                  "buffer_id INT NOT NULL,"
                  "original_weight FLOAT,"
-                 "adjusted_weight FLOAT,"                                                             
+                 "adjusted_weight FLOAT," 
+                 "processed_time timestamp default now(),"                                                            
                  "FOREIGN KEY (buffer_id) REFERENCES buffers(buffer_id),"
                  "FOREIGN KEY (chem_id) REFERENCES chemicals(chemID)"
                  ")")

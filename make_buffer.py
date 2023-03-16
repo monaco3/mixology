@@ -12,27 +12,28 @@ import mysql.connector
 
 # Connect to the database
 buffer_mix_db = mysql.connector.connect(
-  host="localhost", #"localhost",
-  user="phdd",  #"yourusername",
-  password="root",  # "yourpassword",
-  database="BufferStationDB", #"yourdatabase"
+  host="sql7.freesqldatabase.com", #"localhost",
+  user="sql7606170",  #"yourusername",
+  password="X74Xryppcr",  # "yourpassword",
+  database="sql7606170", #"yourdatabase"
+  port="3306",
 )
 
-# import time
-# from labjack import ljm
-# #---------------- PHASE 00 -MAKE SURE THERE IS CONNECTION to the Labjack  ------------------------------#
-#
-# mylabjack = ljm.openS("ANY", "ANY","ANY") #Connect to any labkjack connected to the host computer or network
-# info = ljm.getHandleInfo(mylabjack)
-# print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
-#       "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
-#       (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
+import time
+from labjack import ljm
+#---------------- PHASE 00 -MAKE SURE THERE IS CONNECTION to the Labjack  ------------------------------#
+
+mylabjack = ljm.openS("ANY", "ANY","ANY") #Connect to any labkjack connected to the host computer or network
+info = ljm.getHandleInfo(mylabjack)
+print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
+       "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
+       (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
 # ################ End of the connected Labjack info ####################
 
 #Creating a cursor object using the cursor() method
 mycursor = buffer_mix_db.cursor()
 
-mycursor.execute("USE BufferStationDB")
+mycursor.execute("USE sql7606170")
 buffer_mix_db.commit()
 #mycursor.execute("DROP TABLE buffer_chemicals")
 
@@ -90,8 +91,8 @@ else:
 
 # Specify the pins for each pump
 pump_pins = {
-    1: "EIO0", #S0 	EIO0
-    2: "EIO1", #S1 	EIO1
+    1: "EIO6", #S0 	EIO0
+    2: "EIO7", #S1 	EIO1
     3: "EIO4", #S2 	EIO2
     4: "EIO3", #S3 	EIO3
     5: "EIO4", #S4 	EIO4
@@ -184,10 +185,12 @@ for result in chemBuff_results:
     pump_number = result[2]
     pin = pump_pins[pump_number]
     #daq.setDigitalPin(pin, 1)
+    ljm.eWriteName(mylabjack, pin, 1)  # Set the pin high
     print(f"Set pin {pin} high")
-    time.sleep(duration/1000)
+    time.sleep(duration/10000)
     #time.sleep(2)
     #daq.setDigitalPin(pin, 0)
+    ljm.eWriteName(mylabjack, pin, 0)  # Set the pin low
     print(f"Set pin {pin} low")
 
     # Add the pump to the set of used pumps
