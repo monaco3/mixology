@@ -86,7 +86,7 @@ else:
 pump_pins = {
     #P1 - DB15 connector
     1: "EIO0", #S0 	EIO0  
-    2: "EIO1", #S1 	EIO1
+    2: "CIO3", #S1 	EIO1
     3: "EIO2", #S2 	EIO2
     4: "EIO3", #S3 	EIO3
     5: "EIO4", #S4 	EIO4
@@ -114,13 +114,14 @@ pump_pins = {
 
 # Link the used pumps to the motor pins
 #pumps_used = used_pumps.get_pumps()
-motor_pins = []
-for pump in used_pumps.get_pumps():
-    if pump in pump_pins:
-        motor_pins.append(pump_pins[pump])
+class motors_used:
+    motor_pins = []
+    for pump in used_pumps.get_pumps():
+        if pump in pump_pins:
+            motor_pins.append(pump_pins[pump])
 
-# Print the motor pins used
-print("Motor pins used: {}".format(", ".join(motor_pins)))
+    # Print the motor pins used
+    print("Motor pins used: {}".format(", ".join(motor_pins)))
 
 ###----ADJUSTING THE CHEMICAL VALUES FOR THE SELECTED BUFFER--------------
 
@@ -159,19 +160,6 @@ buffer_id = mycursor.fetchone()[0]
 # Prepare the SQL statement to insert the processed buffer data
 processedBuffer_sql = "INSERT INTO processedBuffer (nameofbuffer_processor, batch_number, buffer_id, chem_id, original_weight, adjusted_weight) VALUES (%s, %s, %s, %s, %s, %s)"
 
-#
-# # Loop through each chemical used in the buffer and insert its data into the processedBuffer table
-# for result in chemBuff_results:
-#     chemical_name = result[1]
-#     original_weight = result[3]
-#     adjusted_weight = chemical_weights[chemical_name]
-#     mycursor.execute("SELECT chemID FROM chemicals WHERE chemName = %s", (chemical_name,))
-#     chem_id = mycursor.fetchone()[0]
-#     data = (nameofbuffer_processor, batch_number, buffer_id, chem_id, original_weight, adjusted_weight)
-#     mycursor.execute(processedBuffer_sql, data)
-
-
-
 # Loop through each chemical used in the buffer and insert its data into the processedBuffer table
 for result in chemBuff_results:
     chemical_name = result[1]
@@ -188,26 +176,8 @@ for result in chemBuff_results:
     # Print the adjusted weight and the duration
     print(f"{chemical_name}: adjusted weight = {adjusted_weight}, duration = {duration}ms")
 
-    # Turn the motor pin high for the specified duration
-    pump_number = result[2]
-    pin = pump_pins[pump_number]
-    #daq.setDigitalPin(pin, 1)
-    ljm.eWriteName(mylabjack, pin, 1)  # Set the pin high
-    print(f"Set pin {pin} high")
-    time.sleep(duration/10000)
-    #time.sleep(2)
-    #daq.setDigitalPin(pin, 0)
-    ljm.eWriteName(mylabjack, pin, 0)  # Set the pin low
-    print(f"Set pin {pin} low")
-
-    # Add the pump to the set of used pumps
-    used_pumps.add_pump(pump_number)
-
-# Print the list of used pumps
-print("Pumps used: {}".format(used_pumps.get_pumps()))
-
-
-
+# Commit the changes to the database
+buffer_mix_db.commit()
 
 #     # Control the LabJack to dispense the chemical
 #     duration = int(adjusted_weight * 1)  # Convert weight to milliseconds
@@ -221,6 +191,26 @@ print("Pumps used: {}".format(used_pumps.get_pumps()))
 #
 # # Close the Labjack connection
 # ljm.close(mylabjack)
+
+
+# Turn the motor pin high for the specified duration
+pump_number = result[2]                                       
+pin = pump_pins[pump_number]
+#daq.setDigitalPin(pin, 1)
+ljm.eWriteName(mylabjack, pin, 1)  # Set the pin high
+print(f"Set pin {pin} high")
+time.sleep(duration/10000)
+#time.sleep(2)
+#daq.setDigitalPin(pin, 0)
+ljm.eWriteName(mylabjack, pin, 0)  # Set the pin low
+print(f"Set pin {pin} low")
+
+# Add the pump to the set of used pumps
+used_pumps.add_pump(pump_number)
+
+# Print the list of used pumps
+print("Pumps used: {}".format(used_pumps.get_pumps()))
+
 
 # Commit the changes to the database
 buffer_mix_db.commit()
