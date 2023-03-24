@@ -23,13 +23,6 @@ print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
        (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
 # ################ End of the connected Labjack info ####################
 
-#Creating a cursor object using the cursor() method
-mycursor = buffer_mix_db.cursor()
-
-mycursor.execute("USE sql7606170")
-buffer_mix_db.commit()
-#mycursor.execute("DROP TABLE buffer_chemicals")
-
 
 # Prompt user to select a buffer
 #buffer_name = input("Enter the name of the buffer you want to make: ")
@@ -87,29 +80,7 @@ pump_pins = {
     #P1 - DB15 connector
     1: "EIO0", #S0 	EIO0  
     2: "CIO3", #S1 	EIO1
-    3: "EIO2", #S2 	EIO2
-    4: "EIO3", #S3 	EIO3
-    5: "EIO4", #S4 	EIO4
-    6: "EIO5", #S5 	EIO5
-    7: "EIO6", #S6 	EIO6
-    8: "EIO7", #S7 	EIO7
-    9: "CIO0", #S8 	CIO0
-    10: "CIO1",#S9 	CIO1
-    11: "CIO2",#S10 CIO2
-    12: "CIO3", #S11 CIO3
-#P2 - DB37 connector
-    13: "FIO0", #S0 FIO0  
-    14: "FIO1", #S1 FIO1
-    15: "FIO2", #S2 FIO2
-    16: "FIO3", #S3 FIO3
-    17: "FIO4", #S4 FIO4
-    18: "FIO5", #S5 FIO5
-    19: "FIO6", #S6 FIO6
-    20: "FIO7", #S7 FIO7
-    21: "DAC0", #S8 DAC0
-    22: "DAC1", #S9 DAC1
-    23: "MIO0", #S10 MIO0
-    24: "MIO1"  #S11 MIO1
+
 }
 
 # Link the used pumps to the motor pins
@@ -179,19 +150,6 @@ for result in chemBuff_results:
 # Commit the changes to the database
 buffer_mix_db.commit()
 
-#     # Control the LabJack to dispense the chemical
-#     duration = int(adjusted_weight * 1)  # Convert weight to milliseconds
-#     ljm.eWriteName(mylabjack, pin_number, 1)  # Set the pin high
-#     print(f"Set pin {pin_number} high")
-#     time.sleep( duration )  # Wait for the duration of the dispense
-#
-#     # Set the pump pin low
-#     ljm.eWriteName(mylabjack, pin_number, 0)  # Set the pin low
-#     print(f"Set pin {pin_number} low")
-#
-# # Close the Labjack connection
-# ljm.close(mylabjack)
-
 
 # Turn the motor pin high for the specified duration
 pump_number = result[2]                                       
@@ -222,3 +180,15 @@ print("Buffer creation successful. Data saved to processedBuffer table.")
 
 
 
+#     # Control the LabJack to dispense the chemical
+#     duration = int(adjusted_weight * 1)  # Convert weight to milliseconds
+#     ljm.eWriteName(mylabjack, pin_number, 1)  # Set the pin high
+#     print(f"Set pin {pin_number} high")
+#     time.sleep( duration )  # Wait for the duration of the dispense
+#
+#     # Set the pump pin low
+#     ljm.eWriteName(mylabjack, pin_number, 0)  # Set the pin low
+#     print(f"Set pin {pin_number} low")
+#
+# # Close the Labjack connection
+# ljm.close(mylabjack)

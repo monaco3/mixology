@@ -75,7 +75,8 @@ mycursor.execute("CREATE TABLE IF NOT EXISTS solventmix ("
                  "solvent_created timestamp default now(), "
                  #"PRIMARY KEY (buffer_id, chem_id),"
                  "FOREIGN KEY (buffer_id) REFERENCES buffers(buffer_id),"
-                 "FOREIGN KEY (chem_id) REFERENCES chemicals(chemID)"
+                 "FOREIGN KEY (chem_id) REFERENCES chemicals(chemID),"
+                 "CONSTRAINT unique_buffer_chem UNIQUE (buffer_id, chem_id)"
                  ")")
 buffer_mix_db.commit()
 
