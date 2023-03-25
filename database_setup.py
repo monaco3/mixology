@@ -16,7 +16,7 @@ mycursor.execute("CREATE TABLE IF NOT EXISTS chemicals ("
                  "pumpNo int UNSIGNED)")
 buffer_mix_db.commit()
 
-
+#
 # #Delete the unwanted tables
 # while True:
 #     # Prompt the user to enter the name of the table to delete

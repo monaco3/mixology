@@ -9,27 +9,6 @@ We then Create a buffer with various chemicals. Buffer can only be made by selec
 from database_setup import *
 import mysql.connector
 
-# # Establishing a connection to the database
-# try:
-#     buffer_mix_db = mysql.connector.connect(
-#         host="localhost",
-#         user="root",
-#         password="root",
-#         database="BufferStationDB",
-#     )
-#     print("Connection established successfully!")
-# except mysql.connector.Error as error:
-#     print(f"Error connecting to MySQL: {error}")
-
-#Creating a cursor object using the cursor() method
-# mycursor = buffer_mix_db.cursor()
-
-
-#Retrieving the list of tables print("List of tables in the database: ")
-#This is a test to be sure database_setup.py import works
-# mycursor.execute("SHOW Tables")
-# print(mycursor.fetchall())
-
 # Function to prompt the user to choose between entering chemicals and making a buffer
 def user_choice():
     print("Do you want to add chemicals to the list or create a buffer?")
