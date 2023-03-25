@@ -4,10 +4,13 @@
 if the choice is yes then add the additional weight to the chemicals total weight
 if the users choice is no, then the target weight remains to be the solvent target weight = buffer weight
 """
+from reportlab.lib.styles import getSampleStyleSheet
 
 # Connect to the database
 from private import *
 from labjack_pump_conn import UsedPumps, pump_pins
+from report_and_label import generate_pdf_report
+
 
 # Prompt user to select a buffer
 #buffer_name = input("Enter the name of the buffer you want to make: ")
@@ -126,3 +129,4 @@ buffer_mix_db.commit()
 print("Buffer creation successful. Data saved to processedBuffer table.")
 export_used_pumps = used_pumps
 
+generate_pdf_report(selected_buffer_name, chemical_weights, nameofbuffer_processor, batch_number)
