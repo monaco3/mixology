@@ -1,63 +1,188 @@
 """
 Here we will control the motors/pumps
-Each pump/motor will be assigned to a specific chemical, done during station preparation.( see station_preparation.py)
+Each pump/motor is assigned to a specific chemical, which comes from the selected buffer
 
 Run each motor/pump one by one till the required chemical weight target is reached
 
 """
-
 import time
+from private import *
+import time
+import logging
 from labjack import ljm
-#---------------- PHASE 00 -MAKE SURE THERE IS CONNECTION to the Labjack  ------------------------------#
+from labjack_pump_conn import mylabjack
+from scale_control import Initialise_Serial_Unit
+from make_buffer import export_used_pumps as used_pumps, pump_pins, chemBuff_results, chemical_weights
 
-mylabjack = ljm.openS("ANY", "ANY","ANY") #Connect to any labkjack connected to the host computer or network
-info = ljm.getHandleInfo(mylabjack)
-print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
-      "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
-      (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
-################ End of the connected Labjack info ####################
+# Set up logger
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
-# Specify the pins for each pump
-pump_pins = {
-    #P1 - DB15 connector
-    1: "EIO0", #S0 	EIO0  
-    2: "EIO1", #S1 	EIO1
-    3: "EIO2", #S2 	EIO2
-    4: "EIO3", #S3 	EIO3
-    5: "EIO4", #S4 	EIO4
-    6: "EIO5", #S5 	EIO5
-    7: "EIO6", #S6 	EIO6
-    8: "EIO7", #S7 	EIO7
-    9: "CIO0", #S8 	CIO0
-    10: "CIO1",#S9 	CIO1
-    11: "CIO2",#S10 CIO2
-    12: "CIO3", #S11 CIO3
-#P2 - DB37 connector
-    13: "FIO0", #S0 FIO0  
-    14: "FIO1", #S1 FIO1
-    15: "FIO2", #S2 FIO2
-    16: "FIO3", #S3 FIO3
-    17: "FIO4", #S4 FIO4
-    18: "FIO5", #S5 FIO5
-    19: "FIO6", #S6 FIO6
-    20: "FIO7", #S7 FIO7
-    21: "DAC0", #S8 DAC0
-    22: "DAC1", #S9 DAC1
-    23: "MIO0", #S10 MIO0
-    24: "MIO1"  #S11 MIO1
-}
+# Add a handler to print messages on the console
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+logger.addHandler(console_handler)
 
-# Set each pump pin high
-for pump_num, pin_name in pump_pins.items():
-    ljm.eWriteName(mylabjack, pin_name, 1) # Set the pin high
-    print(f"Set pump {pump_num} pin {pin_name} high")
-    time.sleep(3) # Wait for 1 second
 
-# Set each pump pin low
-for pump_num, pin_name in pump_pins.items():
-    ljm.eWriteName(mylabjack, pin_name, 0) # Set the pin low
-    print(f"Set pump {pump_num} pin {pin_name} low")
-    time.sleep(1) # Wait for 1 second
+######-----Setting Motor High and Low independently maybe wont use it-------
+def set_motor_high(pin, value):
+    ljm.eWriteName(mylabjack, pin, value)
+    print(f"Set pin {pin} high")
+def set_motor_low(pin):
+    ljm.eWriteName(mylabjack, pin, 0)
+    print(f"Set pin {pin} low")
+######-----Detting Motor High and Low independently maybe wont use it-------
 
-# Close the Labjack connection
-ljm.close(mylabjack)
+
+class PumpController:
+    def __init__(self,adjusted_weights):
+        self.pumptesting = None
+        self.adjusted_weights = adjusted_weights
+        #self.scale = scale
+        # Define flush and dosing parameters here or pass them as arguments to the methods
+
+        self.pumptesting = {
+            "Speed": 5.0,
+            "Time": 2.0,
+            "Mass": 0.1
+        }
+        self.flush = {
+            "flush_speed": 5.0,
+            "flush_step_time": 0.25,
+            "flush_time": 2.0
+        }
+
+        self.dosing = {
+            "FullSpeed": 5.0,
+            "SlowSpeed":2.5,
+            "SlowMass": 0.10,
+            "SlowFraction": 0.1,
+            "AcceptanceMass": 0.4,
+            "AcceptanceFraction": 0.01,
+            "StepTime": 0.4,
+            "StepPause": 0.8
+        }
+
+        self.chem_to_pump = {}
+        for result in chemBuff_results:
+            chemical_name = result[1]
+            pump_no = result[2]
+            self.chem_to_pump[chemical_name] = pump_no
+
+    def PUMP(self, pump_no, pump_speed):
+        pin = pump_pins[pump_no]
+        if pump_speed > 0:
+            ljm.eWriteName(mylabjack, pin, pump_speed)
+            print(f"Set pin {pin} high")
+        else:
+            ljm.eWriteName(mylabjack, pin, 0)
+            print(f"Set pin {pin} low")
+        logger.debug('Set: Pump {} to speed: {}'.format(pump_no,pump_speed))
+
+    def STOP(self):
+        pump_off_signal = 0.0
+        for pump in self.chem_to_pump.values():
+            pin = pump_pins[pump]
+            self.PUMP(pump, pump_off_signal)
+        logger.debug('Pumps Stoped')
+
+    def TARA(self):
+        # Implement the TARA function here to tare the scale
+        self.scale.tara()
+        pass
+
+    def WEIGHT(self):
+        # Implement the WEIGHT function here to read the weight from the scale
+        return self.scale.stable_weight()
+        pass
+
+    def READ_SCALE(self):
+        # Implement the READ function here to read the data from the scale
+        pass
+
+    # run the pump for a short time
+    def SHORT_RUN(self, pump_no):
+
+        self.PUMP(pump_no, self.dosing['SlowSpeed'])
+        time.sleep(self.dosing['StepTime'])
+        self.STOP()
+        time.sleep(self.dosing['StepPause'])
+        pass
+
+    #Flush the pumps to be used
+    def FLUSH(self, pumps_used):
+        for pump in pumps_used:
+            self.PUMP(pump, self.flush['flush_speed'])
+            time.sleep(self.flush['flush_step_time'])
+            print("Flushing")
+
+        time.sleep(self.flush['flush_time'])
+
+        for pump in pumps_used:
+            self.PUMP(pump, 0)  # 0 is the pump_off_signal
+            time.sleep(self.flush['flush_step_time'])
+
+        self.STOP()
+        print("Stopped flushing")
+    def DOSE(self, pump_no, mass_target=None):
+
+        if mass_target is None:
+            for chemical, weight in self.adjusted_weights.items():
+                if self.chem_to_pump[chemical] == pump_no:
+                    mass_target = weight
+                    break
+        slow_buffer = max(self.dosing['SlowMass'], self.dosing['SlowFraction'] * mass_target)
+        accept_buffer = max(self.dosing['AcceptanceMass'], self.dosing['AcceptanceFraction'] * mass_target)
+        logger.debug("Slow_buffer: {}, accept_buffer: {}".format(slow_buffer, accept_buffer))
+
+        estimated_flow_rate = 1.0  # Set your estimated flow rate (in g/s or any other unit you prefer)
+
+        mass_pumped = 0.0
+        while mass_target > mass_pumped + slow_buffer:
+            pump_speed = self.dosing['FullSpeed']
+            self.PUMP(pump_no, pump_speed)
+            time.sleep(1)  # Run the pump for 1 second at a time (adjust as needed)
+            mass_pumped += estimated_flow_rate  # Update the mass_pumped based on the estimated flow rate
+
+        self.STOP()
+
+        while mass_target > mass_pumped + accept_buffer:
+            self.PUMP(pump_no, self.dosing['SlowSpeed'])  # Add 'SlowSpeed' to your dosing dictionary
+            time.sleep(0.5)  # Run the pump for 0.5 seconds at a time (adjust as needed)
+            mass_pumped += estimated_flow_rate * 0.5  # Update the mass_pumped based on the estimated flow rate
+
+        self.STOP()
+
+        logger.info("Pump {} added: {:.2f} g".format(pump_no, mass_pumped))
+        return mass_pumped
+
+    def TEST(self, pump_no):
+        estimated_flow_rate = 1.0  # Set your estimated flow rate (in g/s or any other unit you prefer)
+
+        # Start the pump
+        self.PUMP(pump_no, self.pumptesting['Speed'])
+        time.sleep(self.pumptesting['Time'])
+        self.STOP()
+
+        # Calculate the mass increase based on the estimated flow rate and test time
+        mass_increase = estimated_flow_rate * self.pumptesting['Time']
+
+        if mass_increase > self.pumptesting['Mass']:
+            logger.info('Mass increase by pump {}: {:0.2f}'.format(pump_no, mass_increase))
+            return True
+        else:
+            logger.warning('Low mass increase by pump {}: {:0.2f}g'.format(pump_no, mass_increase))
+            return False
+
+# Create an instance of the PumpController class
+pump_controller = PumpController(chemical_weights)
+
+pump_controller.FLUSH(used_pumps.get_pumps())
+
+for result in chemBuff_results:
+    pump_no = result[2]
+    pump_controller.DOSE(pump_no)
+
+# Call the FLUSH method on the instance of the class, passing the list of pumps
+#pump_controller.FLUSH(used_pumps.get_pumps())
+

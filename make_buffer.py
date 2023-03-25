@@ -5,24 +5,9 @@ if the choice is yes then add the additional weight to the chemicals total weigh
 if the users choice is no, then the target weight remains to be the solvent target weight = buffer weight
 """
 
-import time
-import mysql.connector
-#import station_preparation
-#from station_preparation import *
-
 # Connect to the database
 from private import *
-import time
-from labjack import ljm
-#---------------- PHASE 00 -MAKE SURE THERE IS CONNECTION to the Labjack  ------------------------------#
-
-mylabjack = ljm.openS("ANY", "ANY","ANY") #Connect to any labkjack connected to the host computer or network
-info = ljm.getHandleInfo(mylabjack)
-print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
-       "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
-       (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
-# ################ End of the connected Labjack info ####################
-
+from labjack_pump_conn import UsedPumps, pump_pins
 
 # Prompt user to select a buffer
 #buffer_name = input("Enter the name of the buffer you want to make: ")
@@ -44,24 +29,8 @@ mycursor.execute("SELECT b.buffer_name, c.chemName,c.pumpNo, c.molarWeight FROM 
                  "WHERE b.buffer_name = %s", (selected_buffer_name,))
 chemBuff_results = mycursor.fetchall()
 
-
-class UsedPumps:
-    def __init__(self):
-        self.pumps = set()
-
-    def add_pump(self, pump_number):
-        self.pumps.add(pump_number)
-
-    def remove_pump(self, pump_number):
-        self.pumps.remove(pump_number)
-
-    def get_pumps(self):
-        return sorted(self.pumps)
-
-
 # Create an instance of the UsedPumps class
 used_pumps = UsedPumps()
-
 # Print the results
 if chemBuff_results:
     print("Below are the chemicals and pumps for Buffer:{}".format(selected_buffer_name))
@@ -72,20 +41,9 @@ if chemBuff_results:
 else:
     print("No chemicals found for buffer {}".format(selected_buffer_name))
 
-
-#Connect the pumps to corresponding labjack pins
-
-# Specify the pins for each pump
-pump_pins = {
-    #P1 - DB15 connector
-    1: "EIO0", #S0 	EIO0  
-    2: "CIO3", #S1 	EIO1
-
-}
-
 # Link the used pumps to the motor pins
 #pumps_used = used_pumps.get_pumps()
-class motors_used:
+class MotorsUsed:
     motor_pins = []
     for pump in used_pumps.get_pumps():
         if pump in pump_pins:
@@ -147,22 +105,13 @@ for result in chemBuff_results:
     # Print the adjusted weight and the duration
     print(f"{chemical_name}: adjusted weight = {adjusted_weight}, duration = {duration}ms")
 
+
 # Commit the changes to the database
 buffer_mix_db.commit()
 
-
 # Turn the motor pin high for the specified duration
-pump_number = result[2]                                       
+pump_number = result[2]
 pin = pump_pins[pump_number]
-#daq.setDigitalPin(pin, 1)
-ljm.eWriteName(mylabjack, pin, 1)  # Set the pin high
-print(f"Set pin {pin} high")
-time.sleep(duration/10000)
-#time.sleep(2)
-#daq.setDigitalPin(pin, 0)
-ljm.eWriteName(mylabjack, pin, 0)  # Set the pin low
-print(f"Set pin {pin} low")
-
 # Add the pump to the set of used pumps
 used_pumps.add_pump(pump_number)
 
@@ -175,20 +124,5 @@ buffer_mix_db.commit()
 
 # Print a success message
 print("Buffer creation successful. Data saved to processedBuffer table.")
+export_used_pumps = used_pumps
 
-
-
-
-
-#     # Control the LabJack to dispense the chemical
-#     duration = int(adjusted_weight * 1)  # Convert weight to milliseconds
-#     ljm.eWriteName(mylabjack, pin_number, 1)  # Set the pin high
-#     print(f"Set pin {pin_number} high")
-#     time.sleep( duration )  # Wait for the duration of the dispense
-#
-#     # Set the pump pin low
-#     ljm.eWriteName(mylabjack, pin_number, 0)  # Set the pin low
-#     print(f"Set pin {pin_number} low")
-#
-# # Close the Labjack connection
-# ljm.close(mylabjack)
