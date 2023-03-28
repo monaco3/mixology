@@ -11,7 +11,7 @@ import time
 import logging
 from labjack import ljm
 from labjack_pump_conn import mylabjack
-from scale_control import Initialise_Serial_Unit
+#from scale_control import Initialise_Serial_Unit
 from make_buffer import export_used_pumps as used_pumps, pump_pins, chemBuff_results, chemical_weights
 
 # Set up logger
@@ -53,8 +53,8 @@ class PumpController:
         }
 
         self.dosing = {
-            "FullSpeed": 5.0,
-            "SlowSpeed":2.5,
+            "FullSpeed": 1.0,  #5.0
+            "SlowSpeed":0.8,    #2.5  so far the motors are not able to start running at 2.5 setting this to 3 and higher the motors are able to run
             "SlowMass": 0.10,
             "SlowFraction": 0.1,
             "AcceptanceMass": 0.4,
@@ -85,6 +85,13 @@ class PumpController:
             pin = pump_pins[pump]
             self.PUMP(pump, pump_off_signal)
         logger.debug('Pumps Stoped')
+    
+
+    def set_motor_pwm(self, pump_no, duty_cycle):
+        pin = pump_pins[pump_no]
+        ljm.eWriteName(mylabjack, pin, duty_cycle)
+        print(f"Set pin {pin} to duty cycle {duty_cycle}")
+
 
     def TARA(self):
         # Implement the TARA function here to tare the scale
@@ -124,6 +131,49 @@ class PumpController:
 
         self.STOP()
         print("Stopped flushing")
+    
+
+    def DOSE(self, pump_no, mass_target=None):
+        if mass_target is None:
+            for chemical, weight in self.adjusted_weights.items():
+                if self.chem_to_pump[chemical] == pump_no:
+                    mass_target = weight
+                    break
+        slow_buffer = max(self.dosing['SlowMass'], self.dosing['SlowFraction'] * mass_target)
+        accept_buffer = max(self.dosing['AcceptanceMass'], self.dosing['AcceptanceFraction'] * mass_target)
+        logger.debug("Slow_buffer: {}, accept_buffer: {}".format(slow_buffer, accept_buffer))
+
+        estimated_flow_rate = 1.0  # Set your estimated flow rate (in g/s or any other unit you prefer)
+
+        mass_pumped = 0.0
+        while mass_target > mass_pumped + slow_buffer:
+            duty_cycle = 1.0
+            self.set_motor_pwm(pump_no, duty_cycle)
+            time.sleep(1)  # Run the pump for 1 second at a time (adjust as needed)
+            mass_pumped += estimated_flow_rate  # Update the mass_pumped based on the estimated flow rate
+
+        self.STOP()
+
+        pulse_duration = 0.1  # Define the pulse duration (adjust as needed)
+        pulse_interval = 0.2  # Define the interval between pulses (adjust as needed)
+
+        while mass_target > mass_pumped + accept_buffer:
+            duty_cycle = 1.0
+            self.set_motor_pwm(pump_no, duty_cycle)  
+            time.sleep(pulse_duration)  # Run the pump for the pulse duration
+            self.STOP()
+            time.sleep(pulse_interval)  # Wait for the interval between pulses
+            mass_pumped += estimated_flow_rate * pulse_duration  # Update the mass_pumped based on the estimated flow rate
+
+        self.STOP()
+
+        logger.info("Pump {} added: {:.2f} g".format(pump_no, mass_pumped))
+        return mass_pumped
+
+
+
+
+    """
     def DOSE(self, pump_no, mass_target=None):
 
         if mass_target is None:
@@ -146,15 +196,39 @@ class PumpController:
 
         self.STOP()
 
+ 
+        #increasing the SlowSpeed value in the dosing dictionary, e.g., to 3.0 or 3.5. Next, adjust the pulse duration and interval to better match your motor's characteristics:
+      
+        n_pulses = 10  # Define the number of pulses (adjust as needed)
+        pulse_duration = 0.1  # Define the pulse duration (adjust as needed)
+        pulse_interval = 0.2  # Define the interval between pulses (adjust as needed)
+
         while mass_target > mass_pumped + accept_buffer:
-            self.PUMP(pump_no, self.dosing['SlowSpeed'])  # Add 'SlowSpeed' to your dosing dictionary
-            time.sleep(0.5)  # Run the pump for 0.5 seconds at a time (adjust as needed)
-            mass_pumped += estimated_flow_rate * 0.5  # Update the mass_pumped based on the estimated flow rate
+            for _ in range(n_pulses):
+                self.PUMP(pump_no, self.dosing['SlowSpeed'])  # Add 'SlowSpeed' to your dosing dictionary
+                time.sleep(pulse_duration)  # Run the pump for the pulse duration
+                self.STOP()
+                time.sleep(pulse_interval)  # Wait for the interval between pulses
+                mass_pumped += estimated_flow_rate * pulse_duration  # Update the mass_pumped based on the estimated flow rate
+
+
+        #pulse_duration = 0.1  # Define the pulse duration (adjust as needed)
+        #pulse_interval = 0.2  # Define the interval between pulses (adjust as needed)
+
+       # while mass_target > mass_pumped + accept_buffer:
+        #    self.PUMP(pump_no, self.dosing['SlowSpeed'])  # Add 'SlowSpeed' to your dosing dictionary
+        #    time.sleep(pulse_duration)  # Run the pump for the pulse duration
+            self.STOP()
+        #    time.sleep(pulse_interval)  # Wait for the interval between pulses
+         #   mass_pumped += estimated_flow_rate * pulse_duration  # Update the mass_pumped based on the estimated flow rate
 
         self.STOP()
 
         logger.info("Pump {} added: {:.2f} g".format(pump_no, mass_pumped))
         return mass_pumped
+
+        """
+
 
     def TEST(self, pump_no):
         estimated_flow_rate = 1.0  # Set your estimated flow rate (in g/s or any other unit you prefer)
