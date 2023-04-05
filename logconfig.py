@@ -1,3 +1,5 @@
+import logging
+from logging.handlers import TimedRotatingFileHandler
 LOGGING_CONFIG = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -22,23 +24,29 @@ LOGGING_CONFIG = {
         'activity_logs': {
             'level': 'INFO',
             'formatter': 'standard',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': 'activity_logs.log',
-            'mode': 'w',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 5,
         },
         'debug_logs': {
             'level': 'DEBUG',
             'formatter': 'heavy',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': 'debug_logs.log',
-            'mode': 'w',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 5,
         },
         'error_logs': {
             'level': 'ERROR',
             'formatter': 'heavy',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': 'error_logs.log',
-            'mode': 'w',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 5,
         },
     },
     'loggers': {
