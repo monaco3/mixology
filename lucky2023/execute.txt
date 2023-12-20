@@ -1,0 +1,6 @@
+Standard way of executing C++ files
+Make sure you're in the exact folder of the file
+
+ g++ Exercise1.cpp -o Exercise1.exe
+
+ ./Exercise1.exe
